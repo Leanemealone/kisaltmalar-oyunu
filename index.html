@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kısaltma Bulma Oyunu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        :root { --turuncu: #FF9F43; --yesil: #1DD1A1; --mavi: #54A0FF; --mor: #6C5CE7; --sari: #FFD93D; --kirmizi: #FF5252; }
+        body {
+            font-family: 'Baloo 2', sans-serif; margin: 0; padding: 0;
+            background: #A2D2FF url('https://raw.githubusercontent.com/Leanemealone/assets-images/refs/heads/main/arkaplan.jpg') no-repeat center center fixed;
+            background-size: cover; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden;
+        }
+        .app-card { background: rgba(255, 255, 255, 0.96); width: 88%; max-width: 420px; border-radius: 40px; padding: 25px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.2); border: 6px solid var(--sari); }
+        h1 { color: var(--mor); margin: 0; text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff; font-size: 28px; }
+        select, input { padding: 15px; width: 100%; border-radius: 15px; border: 2px solid #ddd; font-size: 18px; font-family: inherit; margin-top: 10px; box-sizing: border-box; outline: none; }
+        #score-scroll { background: rgba(255, 255, 255, 0.8); border: 3px solid var(--sari); border-radius: 20px; height: 160px; overflow-y: auto; padding: 10px; margin: 15px 0; }
+        ul { list-style: none; padding: 0; margin: 0; }
+        li { display: flex; justify-content: space-between; padding: 10px; margin-bottom: 5px; border-radius: 12px; font-weight: bold; color: white; font-size: 14px; }
+        .start-btn { background: var(--mor); color: white; padding: 18px; font-size: 22px; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 6px 0 #4834d4; width: 100%; margin-top: 10px; }
+        .badge { padding: 10px 15px; 
+    border-radius: 20px; 
+    font-weight: bold; 
+    font-size: 16px; /* Yazılar sığsın diye biraz küçülttük */
+    display: flex;
+    align-items: center;
+    gap: 5px; /* İkon ile yazı arasındaki boşluk */
+    box-shadow: 0 4px 0 rgba(0,0,0,0.1); }
+        .audio-wave { font-size: 60px; margin: 20px 0; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .choice-btn { width: 100%; padding: 20px; margin: 10px 0; font-size: 24px; font-weight: 700; color: white; border: none; border-radius: 25px; box-shadow: 0 6px 0 rgba(0,0,0,0.2); cursor: pointer; }
+#game-screen h2 {
+    background: rgba(255, 255, 255, 0.5);
+    padding: 10px;
+    border-radius: 15px;
+    border: 2px dashed var(--mor);
+}
+.retry-btn {
+    background: var(--mavi);
+    color: white;
+    padding: 12px 25px;
+    font-size: 18px;
+    border: none;
+    border-radius: 30px; /* Daha yuvarlak */
+    cursor: pointer;
+    box-shadow: 0 6px 0 #2980b9; /* 3D derinlik efekti */
+    transition: all 0.2s ease; /* Yumuşak geçiş */
+    font-family: 'Baloo 2', cursive;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 10px auto 20px auto;
+    width: auto;
+    min-width: 200px;
+}
+
+.retry-btn:active {
+    box-shadow: 0 2px 0 #2980b9; /* Tıklandığında çökme efekti */
+    transform: translateY(4px);
+}
+
+.retry-btn:hover {
+    filter: brightness(1.1); /* Üzerine gelince biraz parlar */
+}
+    </style>
+</head>
+<body>
+
+<div class="app-card">
+    <div id="start-screen">
+        <h1>Kısaltma Bulma Oyunu</h1>
+        <p id="loading-text" style="color: var(--kirmizi); font-weight: bold;">Veriler Yükleniyor...</p>
+        
+        <select id="student-select"><option value="">İsmini Seç...</option></select>
+        <input type="password" id="student-pass" placeholder="4 Haneli Şifren">
+
+        <div id="leaderboard-container">
+            <h3 style="margin: 10px 0; color: var(--mor); font-size: 18px;">🏆 Sınıf Skor Tablosu</h3>
+            <div id="score-scroll"><ul id="score-list"></ul></div>
+        </div>
+        <button class="start-btn" onclick="checkLogin()">Oyuna Başla! 🚀</button>
+    </div>
+
+    <div id="game-screen" style="display: none;">
+    <div style="display: flex; justify-content: space-around; margin-bottom: 20px;">
+    <div style="background:var(--kirmizi); color:white;" class="badge">
+        ⏳ Kalan Süre: <span id="time-left">90</span>
+    </div>
+    <div style="background:var(--sari);" class="badge">
+        🌟 Skor: <span id="score">0</span>
+    </div>
+</div>
+    
+    <h2 style="color: var(--mor); margin-bottom: 10px; font-size: 22px;">Sesi dinle, doğru kısaltmayı bul!</h2>
+    
+    <div id="feedback-text" style="height: 30px; font-weight: bold; font-size: 20px; margin-top: 10px;"></div>
+    <div class="audio-wave">🔊</div>
+<button class="retry-btn" onclick="playCurrentSound()">
+    <span>🔊</span> Tekrar Dinle
+</button>
+    <div id="choices-area"></div>
+</div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCyXP9I-gYF51z8aCrPGSa9NAPhayytgBQ",
+        authDomain: "kisaltma-yarisi.firebaseapp.com",
+        projectId: "kisaltma-yarisi",
+        storageBucket: "kisaltma-yarisi.firebasestorage.app",
+        messagingSenderId: "693527715124",
+        appId: "1:693527715124:web:1ec547c3e07d1c64265961"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let sorular = []; 
+    let timeLeft = 90, score = 0, timerInterval, currentAudio = null, soruIndex = 0;
+
+    async function sorulariCek() {
+        try {
+            const snapshot = await db.collection("sorular").get();
+            sorular = snapshot.docs.map(doc => doc.data());
+            sorular.sort(() => Math.random() - 0.5);
+            console.log("Sorular hazır!");
+        } catch (error) {
+            console.error("Sorular alınamadı:", error);
+        }
+    }
+
+    window.onload = async () => {
+        await sorulariCek();
+        document.getElementById('loading-text').style.display = 'none';
+
+        const studentSelect = document.getElementById('student-select');
+        const scoreList = document.getElementById('score-list');
+
+        const snapshot = await db.collection("ogrenciler").orderBy("ad").get();
+        snapshot.forEach(doc => {
+            let opt = document.createElement('option');
+            opt.value = doc.id; opt.text = doc.id;
+            studentSelect.add(opt);
+        });
+
+        const scoreSnapshot = await db.collection("ogrenciler").orderBy("enYuksekSkor", "desc").limit(37).get();
+        let i = 1;
+        scoreSnapshot.forEach(doc => {
+            let li = document.createElement('li');
+            li.style.background = i==1 ? 'var(--turuncu)' : i==2 ? 'var(--yesil)' : i==3 ? 'var(--mavi)' : '#eee';
+            if(i>3) li.style.color = '#555';
+            li.innerHTML = `<span>${i}. ${doc.id}</span> <span>${doc.data().enYuksekSkor} Puan</span>`;
+            scoreList.appendChild(li);
+            i++;
+        });
+    };
+
+    async function checkLogin() {
+        const name = document.getElementById('student-select').value;
+        const pass = document.getElementById('student-pass').value;
+        if(!name || !pass) return alert("İsim seç ve şifreni yaz! 😊");
+        if(sorular.length === 0) return alert("Sorular henüz yüklenmedi, lütfen bekle!");
+
+        const userDoc = await db.collection("ogrenciler").doc(name).get();
+        if(userDoc.exists && userDoc.data().sifre === pass) {
+            startGame();
+        } else {
+            alert("Hatalı şifre! 😕");
+        }
+    }
+
+    function startGame() {
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'block';
+        startTimer(); loadQuestion();
+    }
+
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            timeLeft--; document.getElementById('time-left').innerText = timeLeft;
+            if(timeLeft <= 0) finishGame();
+        }, 1000);
+    }
+
+    async function finishGame() {
+        clearInterval(timerInterval);
+        const name = document.getElementById('student-select').value;
+        const userDoc = await db.collection("ogrenciler").doc(name).get();
+        if(score > userDoc.data().enYuksekSkor) {
+            await db.collection("ogrenciler").doc(name).update({ enYuksekSkor: score });
+        }
+        alert("Oyun bitti! Puanın: " + score); location.reload();
+    }
+
+    function loadQuestion() {
+        if(soruIndex >= sorular.length) soruIndex = 0;
+        const q = sorular[soruIndex];
+        const area = document.getElementById('choices-area'); area.innerHTML = "";
+        
+        q.secenekler.forEach((s, i) => {
+            const btn = document.createElement('button');
+            btn.className = `choice-btn`;
+            btn.style.backgroundColor = i==0 ? 'var(--turuncu)' : i==1 ? 'var(--yesil)' : 'var(--mavi)';
+            btn.innerText = s;
+            btn.onclick = () => {
+                const feedback = document.getElementById('feedback-text');
+                if(s === q.dogru) {
+                    score += 10; 
+                    document.getElementById('score').innerText = score;
+                    feedback.innerText = "🌟 Aferin, doğru cevapladın! 🌟";
+                    feedback.style.color = "var(--yesil)";
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                    new Audio('https://raw.githubusercontent.com/Leanemealone/2-E-S-n-f-Resfebe-Oyunu/main/success.mp3').play();
+                    setTimeout(() => {
+                        feedback.innerText = "";
+                        soruIndex++; 
+                        loadQuestion();
+                    }, 1500);
+                } else { 
+                    feedback.innerText = "❌ Üzgünüm yanlış cevap, tekrar dene! ❌";
+                    feedback.style.color = "var(--kirmizi)";
+                    new Audio('https://raw.githubusercontent.com/Leanemealone/2-E-S-n-f-Resfebe-Oyunu/main/error.mp3').play();
+                    setTimeout(() => { feedback.innerText = ""; }, 1500);
+                }
+            };
+            area.appendChild(btn);
+        });
+        playCurrentSound();
+    }
+
+    function playCurrentSound() {
+    // Eğer hali hazırda çalan bir ses varsa onu durdur ve başa sar
+    if (currentAudio) { 
+        currentAudio.pause(); 
+        currentAudio.currentTime = 0; 
+    }
+    
+    const dosyaAdi = sorular[soruIndex].ses;
+    const tamYol = dosyaAdi.includes("http") ? dosyaAdi : "https://raw.githubusercontent.com/Leanemealone/kisaltmalar-oyunu/main/" + dosyaAdi;
+    
+    currentAudio = new Audio(tamYol);
+    currentAudio.play().catch(e => console.error("Ses çalmadı:", e));
+}
+</script>
+</body>
+</html>
