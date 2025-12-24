@@ -23,52 +23,18 @@
         ul { list-style: none; padding: 0; margin: 0; }
         li { display: flex; justify-content: space-between; padding: 10px; margin-bottom: 5px; border-radius: 12px; font-weight: bold; color: white; font-size: 14px; }
         .start-btn { background: var(--mor); color: white; padding: 18px; font-size: 22px; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 6px 0 #4834d4; width: 100%; margin-top: 10px; }
-        .badge { padding: 10px 15px; 
-    border-radius: 20px; 
-    font-weight: bold; 
-    font-size: 16px; /* Yazılar sığsın diye biraz küçülttük */
-    display: flex;
-    align-items: center;
-    gap: 5px; /* İkon ile yazı arasındaki boşluk */
-    box-shadow: 0 4px 0 rgba(0,0,0,0.1); }
+        .badge { padding: 10px 15px; border-radius: 20px; font-weight: bold; font-size: 16px; display: flex; align-items: center; gap: 5px; box-shadow: 0 4px 0 rgba(0,0,0,0.1); }
         .audio-wave { font-size: 60px; margin: 20px 0; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-        .choice-btn { width: 100%; padding: 20px; margin: 10px 0; font-size: 24px; font-weight: 700; color: white; border: none; border-radius: 25px; box-shadow: 0 6px 0 rgba(0,0,0,0.2); cursor: pointer; }
-#game-screen h2 {
-    background: rgba(255, 255, 255, 0.5);
-    padding: 10px;
-    border-radius: 15px;
-    border: 2px dashed var(--mor);
-}
-.retry-btn {
-    background: var(--mavi);
-    color: white;
-    padding: 12px 25px;
-    font-size: 18px;
-    border: none;
-    border-radius: 30px; /* Daha yuvarlak */
-    cursor: pointer;
-    box-shadow: 0 6px 0 #2980b9; /* 3D derinlik efekti */
-    transition: all 0.2s ease; /* Yumuşak geçiş */
-    font-family: 'Baloo 2', cursive;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin: 10px auto 20px auto;
-    width: auto;
-    min-width: 200px;
-}
-
-.retry-btn:active {
-    box-shadow: 0 2px 0 #2980b9; /* Tıklandığında çökme efekti */
-    transform: translateY(4px);
-}
-
-.retry-btn:hover {
-    filter: brightness(1.1); /* Üzerine gelince biraz parlar */
-}
+        .choice-btn { width: 100%; padding: 20px; margin: 10px 0; font-size: 24px; font-weight: 700; color: white; border: none; border-radius: 25px; box-shadow: 0 6px 0 rgba(0,0,0,0.2); cursor: pointer; transition: 0.2s; }
+        
+        /* EKLEME: Buton kilitlendiğinde biraz şeffaf görünsün */
+        .choice-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: translateY(4px); box-shadow: none; }
+        
+        #game-screen h2 { background: rgba(255, 255, 255, 0.5); padding: 10px; border-radius: 15px; border: 2px dashed var(--mor); }
+        .retry-btn { background: var(--mavi); color: white; padding: 12px 25px; font-size: 18px; border: none; border-radius: 30px; cursor: pointer; box-shadow: 0 6px 0 #2980b9; transition: all 0.2s ease; font-family: 'Baloo 2', cursive; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px auto 20px auto; width: auto; min-width: 200px; }
+        .retry-btn:active { box-shadow: 0 2px 0 #2980b9; transform: translateY(4px); }
+        .retry-btn:hover { filter: brightness(1.1); }
     </style>
 </head>
 <body>
@@ -77,10 +43,8 @@
     <div id="start-screen">
         <h1>Kısaltma Bulma Oyunu</h1>
         <p id="loading-text" style="color: var(--kirmizi); font-weight: bold;">Veriler Yükleniyor...</p>
-        
         <select id="student-select"><option value="">İsmini Seç...</option></select>
         <input type="password" id="student-pass" placeholder="4 Haneli Şifren">
-
         <div id="leaderboard-container">
             <h3 style="margin: 10px 0; color: var(--mor); font-size: 18px;">🏆 Sınıf Skor Tablosu</h3>
             <div id="score-scroll"><ul id="score-list"></ul></div>
@@ -89,24 +53,16 @@
     </div>
 
     <div id="game-screen" style="display: none;">
-    <div style="display: flex; justify-content: space-around; margin-bottom: 20px;">
-    <div style="background:var(--kirmizi); color:white;" class="badge">
-        ⏳ Kalan Süre: <span id="time-left">90</span>
+        <div style="display: flex; justify-content: space-around; margin-bottom: 20px;">
+            <div style="background:var(--kirmizi); color:white;" class="badge">⏳ Kalan Süre: <span id="time-left">90</span></div>
+            <div style="background:var(--sari);" class="badge">🌟 Skor: <span id="score">0</span></div>
+        </div>
+        <h2 style="color: var(--mor); margin-bottom: 10px; font-size: 22px;">Sesi dinle, doğru kısaltmayı bul!</h2>
+        <div id="feedback-text" style="height: 30px; font-weight: bold; font-size: 20px; margin-top: 10px;"></div>
+        <div class="audio-wave">🔊</div>
+        <button class="retry-btn" onclick="playCurrentSound()"><span>🔊</span> Tekrar Dinle</button>
+        <div id="choices-area"></div>
     </div>
-    <div style="background:var(--sari);" class="badge">
-        🌟 Skor: <span id="score">0</span>
-    </div>
-</div>
-    
-    <h2 style="color: var(--mor); margin-bottom: 10px; font-size: 22px;">Sesi dinle, doğru kısaltmayı bul!</h2>
-    
-    <div id="feedback-text" style="height: 30px; font-weight: bold; font-size: 20px; margin-top: 10px;"></div>
-    <div class="audio-wave">🔊</div>
-<button class="retry-btn" onclick="playCurrentSound()">
-    <span>🔊</span> Tekrar Dinle
-</button>
-    <div id="choices-area"></div>
-</div>
 </div>
 
 <script>
@@ -139,7 +95,6 @@
     window.onload = async () => {
         await sorulariCek();
         document.getElementById('loading-text').style.display = 'none';
-
         const studentSelect = document.getElementById('student-select');
         const scoreList = document.getElementById('score-list');
 
@@ -211,6 +166,11 @@
             btn.innerText = s;
             btn.onclick = () => {
                 const feedback = document.getElementById('feedback-text');
+                
+                // --- KİLİTLEME: Tıklandığı an tüm butonları kapat ---
+                const allBtns = document.querySelectorAll('.choice-btn');
+                allBtns.forEach(b => b.disabled = true);
+
                 if(s === q.dogru) {
                     score += 10; 
                     document.getElementById('score').innerText = score;
@@ -221,13 +181,17 @@
                     setTimeout(() => {
                         feedback.innerText = "";
                         soruIndex++; 
-                        loadQuestion();
+                        loadQuestion(); // Yeni soruda butonlar otomatik açık gelecek
                     }, 1500);
                 } else { 
                     feedback.innerText = "❌ Üzgünüm yanlış cevap, tekrar dene! ❌";
                     feedback.style.color = "var(--kirmizi)";
                     new Audio('https://raw.githubusercontent.com/Leanemealone/2-E-S-n-f-Resfebe-Oyunu/main/error.mp3').play();
-                    setTimeout(() => { feedback.innerText = ""; }, 1500);
+                    setTimeout(() => { 
+                        feedback.innerText = ""; 
+                        // Yanlışta butonları geri aç ki çocuk tekrar denesin
+                        allBtns.forEach(b => b.disabled = false);
+                    }, 1500);
                 }
             };
             area.appendChild(btn);
@@ -236,18 +200,12 @@
     }
 
     function playCurrentSound() {
-    // Eğer hali hazırda çalan bir ses varsa onu durdur ve başa sar
-    if (currentAudio) { 
-        currentAudio.pause(); 
-        currentAudio.currentTime = 0; 
+        if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+        const dosyaAdi = sorular[soruIndex].ses;
+        const tamYol = dosyaAdi.includes("http") ? dosyaAdi : "https://raw.githubusercontent.com/Leanemealone/kisaltmalar-oyunu/main/" + dosyaAdi;
+        currentAudio = new Audio(tamYol);
+        currentAudio.play().catch(e => console.error("Ses çalmadı:", e));
     }
-    
-    const dosyaAdi = sorular[soruIndex].ses;
-    const tamYol = dosyaAdi.includes("http") ? dosyaAdi : "https://raw.githubusercontent.com/Leanemealone/kisaltmalar-oyunu/main/" + dosyaAdi;
-    
-    currentAudio = new Audio(tamYol);
-    currentAudio.play().catch(e => console.error("Ses çalmadı:", e));
-}
 </script>
 </body>
 </html>
